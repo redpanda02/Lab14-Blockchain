@@ -109,7 +109,7 @@ npx hardhat ignition deploy ignition/modules/MyToken.ts
 
 3. Verify contract:
    ```bash
-   npx hardhat verify --network sepolia <CONTRACT_ADDRESS> "MyToken" "MTK" "1000000000000000000000000"
+   npx hardhat verify --network sepolia 0xc47ff5152a8bd3b3415e86c654364a018b4fc31e "MyToken" "MTK" 1000000
    ```
 
 4. Host frontend: Enable GitHub Pages for the `frontend` folder in repository settings, or upload to Netlify, and update the URL here.
