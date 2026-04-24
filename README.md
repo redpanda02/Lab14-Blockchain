@@ -1,57 +1,113 @@
-# Sample Hardhat 3 Beta Project (`node:test` and `viem`)
+# Lab14-Blockchain: MyToken DApp
 
-This project showcases a Hardhat 3 Beta project using the native Node.js test runner (`node:test`) and the `viem` library for Ethereum interactions.
-
-To learn more about the Hardhat 3 Beta, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3 Beta](https://hardhat.org/hardhat3-beta-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
+This project implements a custom ERC20-like token called MyToken with a 1% transfer fee, deployed on Ethereum. It includes smart contracts written in Solidity, a frontend DApp for interacting with the token, and uses Hardhat for development, testing, and deployment.
 
 ## Project Overview
 
-This example project includes:
+This blockchain lab project demonstrates:
 
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using [`node:test`](nodejs.org/api/test.html), the new Node.js native test runner, and [`viem`](https://viem.sh/).
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
+- **MyToken Smart Contract**: A custom token contract with transfer functionality and a 1% fee on transfers.
+- **Frontend DApp**: A web application using ethers.js to connect to MetaMask, display wallet balance, and perform token transfers.
+- **Hardhat Development Environment**: For compiling, testing, and deploying contracts.
+- **Ignition Deployment**: For automated contract deployment.
+
+### Key Features
+
+- ERC20-like token with name, symbol, and balance tracking
+- Transfer function with a 1% fee (burned on transfer)
+- MetaMask integration for wallet connection
+- Sepolia testnet support
+- Simple, responsive UI for token management
+
+## Prerequisites
+
+- Node.js (v18 or higher)
+- MetaMask browser extension
+- Sepolia ETH for deployment and transactions (can be obtained from faucets)
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/redpanda02/Lab14-Blockchain.git
+cd Lab14-Blockchain
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
 
 ## Usage
 
+### Compiling Contracts
+
+```bash
+npx hardhat compile
+```
+
 ### Running Tests
 
-To run all the tests in the project, execute the following command:
-
-```shell
+Run all tests:
+```bash
 npx hardhat test
 ```
 
-You can also selectively run the Solidity or `node:test` tests:
-
-```shell
+Run Solidity tests only:
+```bash
 npx hardhat test solidity
-npx hardhat test nodejs
 ```
 
-### Make a deployment to Sepolia
+### Deploying Contracts
 
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
+1. Create an Ignition module for MyToken deployment (see `ignition/modules/Counter.ts` as example).
 
-To run the deployment to a local chain:
-
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
+2. Deploy to local network:
+```bash
+npx hardhat ignition deploy ignition/modules/MyToken.ts
 ```
 
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
+3. Deploy to Sepolia testnet:
+   - Set your private key:
+     ```bash
+     npx hardhat keystore set SEPOLIA_PRIVATE_KEY
+     ```
+   - Deploy:
+     ```bash
+     npx hardhat ignition deploy --network sepolia ignition/modules/MyToken.ts
+     ```
 
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
+### Running the Frontend
 
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
+1. Update the contract address in `frontend/index.html` (line 69) with your deployed contract address.
 
-```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
-```
+2. Open `frontend/index.html` in a web browser.
 
-After setting the variable, you can run the deployment with the Sepolia network:
+3. Connect your MetaMask wallet and switch to Sepolia network.
 
-```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
-```
+4. View your token balance and transfer tokens to other addresses.
+
+## Project Structure
+
+- `contracts/`: Solidity smart contracts
+  - `MyToken.sol`: Main token contract
+  - `MyTokenBase.sol`: Base contract with core functionality
+  - `IMyToken.sol`: Token interface
+- `frontend/`: Web frontend
+  - `index.html`: Complete DApp interface
+- `ignition/modules/`: Deployment scripts
+- `test/`: Test files
+- `scripts/`: Utility scripts
+
+## Contract Details
+
+- **MyToken**: Inherits from MyTokenBase, sets name, symbol, and initial supply
+- **Transfer Fee**: 1% of transfer amount is deducted from sender's balance
+- **Initial Supply**: Set during deployment
+- **Decimals**: Not implemented (assumed 0 for simplicity)
+
+## Development
+
+This project uses Hardhat 3 Beta with viem for Ethereum interactions and Node.js native test runner.
+
+For more information on Hardhat, visit [hardhat.org](https://hardhat.org).
