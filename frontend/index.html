@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyToken DApp</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #f4f4f4; color: #222; }
+    header { background: #1a1a2e; color: #fff; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    header h1 { font-size: 1.2rem; }
+    #connect-btn { background: #e94560; color: #fff; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; }
+    #connect-btn:hover { background: #c73652; }
+    main { max-width: 520px; margin: 2rem auto; padding: 0 1rem; }
+    .card { background: #fff; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .card h2 { font-size: 1rem; color: #555; margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .info-row { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 0.3rem 0; border-bottom: 1px solid #f0f0f0; }
+    .info-row:last-child { border-bottom: none; }
+    .info-row span:last-child { font-weight: 600; word-break: break-all; text-align: right; max-width: 60%; }
+    label { display: block; font-size: 0.85rem; color: #666; margin-bottom: 0.3rem; margin-top: 0.8rem; }
+    input { width: 100%; padding: 0.55rem 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; }
+    input:focus { outline: none; border-color: #e94560; }
+    button.action-btn { margin-top: 1rem; width: 100%; padding: 0.7rem; background: #1a1a2e; color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; }
+    button.action-btn:hover { background: #16213e; }
+    button.action-btn:disabled { background: #aaa; cursor: not-allowed; }
+    #status { margin-top: 0.8rem; font-size: 0.88rem; padding: 0.6rem 0.9rem; border-radius: 6px; display: none; }
+    #status.pending  { background: #fff8e1; color: #856404; display: block; }
+    #status.success  { background: #d4edda; color: #155724; display: block; }
+    #status.error    { background: #f8d7da; color: #721c24; display: block; }
+    #wallet-section { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>MyToken DApp</h1>
+  <button id="connect-btn">Connect Wallet</button>
+</header>
+
+<main>
+  <div id="wallet-section">
+    <div class="card">
+      <h2>Wallet Info</h2>
+      <div class="info-row"><span>Address</span><span id="wallet-address">—</span></div>
+      <div class="info-row"><span>Balance</span><span id="wallet-balance">—</span></div>
+      <div class="info-row"><span>Token</span><span id="token-name">—</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Transfer Tokens</h2>
+      <label for="recipient">Recipient Address</label>
+      <input id="recipient" type="text" placeholder="0x..." />
+      <label for="amount">Amount (MTK)</label>
+      <input id="amount" type="number" placeholder="100" min="1" />
+      <button class="action-btn" id="transfer-btn">Send</button>
+      <div id="status"></div>
+    </div>
+  </div>
+
+  <div id="no-wallet" class="card" style="text-align:center; color:#888;">
+    Connect your MetaMask wallet to get started.
+  </div>
+</main>
+
+<script type="module">
+  import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.min.js";
+
+  // *** Paste your deployed contract address here after deploying ***
+  const CONTRACT_ADDRESS = "0xc47ff5152a8bd3b3415e86c654364a018b4fc31e";
+
+  const ABI = [
+    { "inputs": [{ "internalType": "address", "name": "user", "type": "address" }], "name": "getBalance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+    { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transfer", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+    { "inputs": [], "name": "name", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
+    { "inputs": [], "name": "symbol", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
+    { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "Transfer", "type": "event" }
+  ];
+
+  const SEPOLIA_CHAIN_ID = "0xaa36a7";
+
+  let provider, signer, contract;
+
+  const connectBtn    = document.getElementById("connect-btn");
+  const walletSection = document.getElementById("wallet-section");
+  const noWallet      = document.getElementById("no-wallet");
+  const statusEl      = document.getElementById("status");
+
+  function setStatus(msg, type) {
+    statusEl.textContent = msg;
+    statusEl.className = type;
+  }
+
+  async function switchToSepolia() {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: SEPOLIA_CHAIN_ID }],
+    });
+  }
+
+  async function loadWalletInfo() {
+    const address = await signer.getAddress();
+    const balance = await contract.getBalance(address);
+    const name    = await contract.name();
+    const symbol  = await contract.symbol();
+
+    document.getElementById("wallet-address").textContent = address;
+    document.getElementById("wallet-balance").textContent = `${balance.toString()} ${symbol}`;
+    document.getElementById("token-name").textContent = `${name} (${symbol})`;
+  }
+
+  async function connectWallet() {
+    if (!window.ethereum) {
+      alert("MetaMask not found. Please install it.");
+      return;
+    }
+
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+
+    const chainId = await window.ethereum.request({ method: "eth_chainId" });
+    if (chainId !== SEPOLIA_CHAIN_ID) {
+      await switchToSepolia();
+    }
+
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer   = await provider.getSigner();
+    contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+    connectBtn.textContent = "Connected";
+    connectBtn.disabled = true;
+    walletSection.style.display = "block";
+    noWallet.style.display = "none";
+
+    await loadWalletInfo();
+  }
+
+  document.getElementById("transfer-btn").addEventListener("click", async () => {
+    const to     = document.getElementById("recipient").value.trim();
+    const amount = document.getElementById("amount").value.trim();
+
+    if (!ethers.isAddress(to)) {
+      setStatus("Invalid recipient address.", "error");
+      return;
+    }
+    if (!amount || Number(amount) <= 0) {
+      setStatus("Enter a valid amount.", "error");
+      return;
+    }
+
+    try {
+      setStatus("Sending transaction…", "pending");
+      document.getElementById("transfer-btn").disabled = true;
+
+      const tx = await contract.transfer(to, BigInt(amount));
+      setStatus(`Pending… TX: ${tx.hash}`, "pending");
+
+      await tx.wait();
+      setStatus(`Confirmed! TX: ${tx.hash}`, "success");
+      await loadWalletInfo();
+    } catch (err) {
+      setStatus(`Failed: ${err.reason ?? err.message}`, "error");
+    } finally {
+      document.getElementById("transfer-btn").disabled = false;
+    }
+  });
+
+  connectBtn.addEventListener("click", connectWallet);
+
+  // auto-reconnect if already authorized
+  if (window.ethereum) {
+    window.ethereum.request({ method: "eth_accounts" }).then(accounts => {
+      if (accounts.length > 0) connectWallet();
+    });
+  }
+</script>
+</body>
+</html>
