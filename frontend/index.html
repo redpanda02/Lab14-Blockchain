@@ -356,6 +356,46 @@
       <div id="status"></div>
     </div>
   </div>
+     <div class="card">
+       <h2>Transfer Tokens</h2>
+       <label for="recipient">Recipient Address</label>
+       <input id="recipient" type="text" placeholder="0x..." />
+       <label for="amount">Amount (MTK)</label>
+       <input id="amount" type="number" placeholder="100" min="1" />
+       <button class="action-btn" id="transfer-btn">Send</button>
+       <div id="status"></div>
+     </div>
+
+     <div class="card">
+       <h2>Approve Spender</h2>
+       <label for="spender">Spender Address</label>
+       <input id="spender" type="text" placeholder="0x..." />
+       <label for="approve-amount">Amount (MTK)</label>
+       <input id="approve-amount" type="number" placeholder="100" min="0" />
+       <button class="action-btn" id="approve-btn">Approve</button>
+       <div id="approve-status"></div>
+     </div>
+
+     <div class="card">
+       <h2>Transfer From</h2>
+       <label for="from">From Address</label>
+       <input id="from" type="text" placeholder="0x..." />
+       <label for="to">To Address</label>
+       <input id="to" type="text" placeholder="0x..." />
+       <label for="transfer-from-amount">Amount (MTK)</label>
+       <input id="transfer-from-amount" type="number" placeholder="100" min="1" />
+       <button class="action-btn" id="transfer-from-btn">Transfer From</button>
+       <div id="transfer-from-status"></div>
+     </div>
+
+     <div class="card" id="owner-section" style="display: none;">
+       <h2>Pause Controls</h2>
+       <div class="info-row"><span>Paused</span><span id="paused-status">—</span></div>
+       <button class="action-btn" id="pause-btn">Pause</button>
+       <button class="action-btn" id="unpause-btn">Unpause</button>
+       <div id="pause-status"></div>
+     </div>
+   </div>
 
   <div id="no-wallet" class="card">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -368,6 +408,7 @@
 <script type="module">
   import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.min.js";
 
+
   // deployed contract address
   const CONTRACT_ADDRESS = "0xc47ff5152a8bd3b3415e86c654364a018b4fc31e";
 
@@ -376,7 +417,17 @@
     { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transfer", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
     { "inputs": [], "name": "name", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
     { "inputs": [], "name": "symbol", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
-    { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "Transfer", "type": "event" }
+    { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "approve", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+    { "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "address", "name": "spender", "type": "address" }], "name": "allowance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+    { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transferFrom", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+    { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+    { "inputs": [], "name": "paused", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+    { "inputs": [], "name": "pause", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+    { "inputs": [], "name": "unpause", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+    { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "Transfer", "type": "event" },
+    { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "spender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "Approval", "type": "event" },
+    { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "address", "name": "by", "type": "address" }], "name": "Paused", "type": "event" },
+    { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "address", "name": "by", "type": "address" }], "name": "Unpaused", "type": "event" }
   ];
 
   const SEPOLIA_CHAIN_ID = "0xaa36a7";
@@ -387,6 +438,10 @@
   const walletSection = document.getElementById("wallet-section");
   const noWallet      = document.getElementById("no-wallet");
   const statusEl      = document.getElementById("status");
+  const approveStatusEl = document.getElementById("approve-status");
+  const transferFromStatusEl = document.getElementById("transfer-from-status");
+  const pauseStatusEl = document.getElementById("pause-status");
+  const ownerSection = document.getElementById("owner-section");
 
   function setStatus(msg, type) {
     statusEl.textContent = msg;
@@ -409,6 +464,19 @@
     document.getElementById("wallet-address").textContent = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
     document.getElementById("wallet-balance").textContent = `${balance.toString()} ${symbol}`;
     document.getElementById("token-name").textContent = `${name}`;
+  }
+
+  async function loadPaused() {
+    const paused = await contract.paused();
+    document.getElementById("paused-status").textContent = paused ? "Yes" : "No";
+  }
+
+  async function checkOwner() {
+    const owner = await contract.owner();
+    const address = await signer.getAddress();
+    if (owner.toLowerCase() === address.toLowerCase()) {
+      ownerSection.style.display = "block";
+    }
   }
 
   async function connectWallet() {
@@ -469,10 +537,131 @@
       document.getElementById("amount").value = "";
       
       await loadWalletInfo();
+      setStatus(`Confirmed! TX: ${tx.hash}`, "success");
+    await loadWalletInfo();
+    await loadPaused();
+    await checkOwner();
     } catch (err) {
       setStatus(`Failed: ${err.reason ?? err.message}`, "error");
     } finally {
       document.getElementById("transfer-btn").disabled = false;
+    }
+  });
+
+  document.getElementById("approve-btn").addEventListener("click", async () => {
+    const spender = document.getElementById("spender").value.trim();
+    const amount = document.getElementById("approve-amount").value.trim();
+
+    if (!ethers.isAddress(spender)) {
+      approveStatusEl.textContent = "Invalid spender address.";
+      approveStatusEl.className = "error";
+      return;
+    }
+    if (!amount || Number(amount) < 0) {
+      approveStatusEl.textContent = "Enter a valid amount.";
+      approveStatusEl.className = "error";
+      return;
+    }
+
+    try {
+      approveStatusEl.textContent = "Approving…";
+      approveStatusEl.className = "pending";
+      document.getElementById("approve-btn").disabled = true;
+
+      const tx = await contract.approve(spender, BigInt(amount));
+      approveStatusEl.textContent = `Pending… TX: ${tx.hash}`;
+
+      await tx.wait();
+      approveStatusEl.textContent = `Approved! TX: ${tx.hash}`;
+      approveStatusEl.className = "success";
+    } catch (err) {
+      approveStatusEl.textContent = `Failed: ${err.reason ?? err.message}`;
+      approveStatusEl.className = "error";
+    } finally {
+      document.getElementById("approve-btn").disabled = false;
+    }
+  });
+
+  document.getElementById("transfer-from-btn").addEventListener("click", async () => {
+    const from = document.getElementById("from").value.trim();
+    const to = document.getElementById("to").value.trim();
+    const amount = document.getElementById("transfer-from-amount").value.trim();
+
+    if (!ethers.isAddress(from)) {
+      transferFromStatusEl.textContent = "Invalid from address.";
+      transferFromStatusEl.className = "error";
+      return;
+    }
+    if (!ethers.isAddress(to)) {
+      transferFromStatusEl.textContent = "Invalid to address.";
+      transferFromStatusEl.className = "error";
+      return;
+    }
+    if (!amount || Number(amount) <= 0) {
+      transferFromStatusEl.textContent = "Enter a valid amount.";
+      transferFromStatusEl.className = "error";
+      return;
+    }
+
+    try {
+      transferFromStatusEl.textContent = "Transferring…";
+      transferFromStatusEl.className = "pending";
+      document.getElementById("transfer-from-btn").disabled = true;
+
+      const tx = await contract.transferFrom(from, to, BigInt(amount));
+      transferFromStatusEl.textContent = `Pending… TX: ${tx.hash}`;
+
+      await tx.wait();
+      transferFromStatusEl.textContent = `Transferred! TX: ${tx.hash}`;
+      transferFromStatusEl.className = "success";
+      await loadWalletInfo();
+    } catch (err) {
+      transferFromStatusEl.textContent = `Failed: ${err.reason ?? err.message}`;
+      transferFromStatusEl.className = "error";
+    } finally {
+      document.getElementById("transfer-from-btn").disabled = false;
+    }
+  });
+
+  document.getElementById("pause-btn").addEventListener("click", async () => {
+    try {
+      pauseStatusEl.textContent = "Pausing…";
+      pauseStatusEl.className = "pending";
+      document.getElementById("pause-btn").disabled = true;
+
+      const tx = await contract.pause();
+      pauseStatusEl.textContent = `Pending… TX: ${tx.hash}`;
+
+      await tx.wait();
+      pauseStatusEl.textContent = `Paused! TX: ${tx.hash}`;
+      pauseStatusEl.className = "success";
+      await loadPaused();
+    } catch (err) {
+      pauseStatusEl.textContent = `Failed: ${err.reason ?? err.message}`;
+      pauseStatusEl.className = "error";
+    } finally {
+      document.getElementById("pause-btn").disabled = false;
+    }
+  });
+
+  document.getElementById("unpause-btn").addEventListener("click", async () => {
+    try {
+      pauseStatusEl.textContent = "Unpausing…";
+      pauseStatusEl.className = "pending";
+      document.getElementById("unpause-btn").disabled = true;
+
+      const tx = await contract.unpause();
+      pauseStatusEl.textContent = `Pending… TX: ${tx.hash}`;
+
+      await tx.wait();
+      pauseStatusEl.textContent = `Unpaused! TX: ${tx.hash}`;
+      pauseStatusEl.className = "success";
+      await loadPaused();
+    } catch (err) {
+      pauseStatusEl.textContent = `Failed: ${err.reason ?? err.message}`;
+      pauseStatusEl.className = "error";
+    } finally {
+      document.getElementById("unpause-btn").disabled = false;
     }
   });
 
