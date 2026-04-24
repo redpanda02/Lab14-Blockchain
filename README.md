@@ -87,6 +87,33 @@ npx hardhat ignition deploy ignition/modules/MyToken.ts
 
 4. View your token balance and transfer tokens to other addresses.
 
+## Token Details
+
+- **Token Name**: MyToken (MTK)
+- **Contract Address**: [Deploy to Sepolia and update here]
+- **Live DApp URL**: [Host frontend on GitHub Pages/Netlify and update here]
+
+## Deployment Instructions
+
+1. Set up secrets:
+   ```bash
+   npx hardhat vars set SEPOLIA_RPC_URL  # Paste your Alchemy/Infura URL
+   npx hardhat vars set SEPOLIA_PRIVATE_KEY  # Paste your MetaMask private key
+   ```
+
+2. Deploy to Sepolia:
+   ```bash
+   npx hardhat run scripts/deploy.ts --network sepolia
+   ```
+   Copy the deployed address and update `frontend/index.html` line 69 and this README.
+
+3. Verify contract:
+   ```bash
+   npx hardhat verify --network sepolia <CONTRACT_ADDRESS> "MyToken" "MTK" "1000000000000000000000000"
+   ```
+
+4. Host frontend: Upload `frontend/index.html` to GitHub Pages or Netlify and update the URL here.
+
 ## Project Structure
 
 - `contracts/`: Solidity smart contracts
