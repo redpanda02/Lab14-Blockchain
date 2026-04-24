@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23818cf8'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
   <style>
     /* Reset & Base */
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -419,8 +420,7 @@
 <script type="module">
   import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.min.js";
 
-  // *** Paste your deployed contract address here after deploying ***
-  const CONTRACT_ADDRESS = "0xc47ff5152a8bd3b3415e86c654364a018b4fc31e";
+  const CONTRACT_ADDRESS = "0x3c78dc361a24b4a06253db4996754b9049a06b51";
 
   const ABI = [
     { "inputs": [{ "internalType": "address", "name": "user", "type": "address" }], "name": "getBalance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
