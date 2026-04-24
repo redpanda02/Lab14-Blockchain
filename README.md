@@ -90,7 +90,7 @@ npx hardhat ignition deploy ignition/modules/MyToken.ts
 ## Token Details
 
 - **Token Name**: MyToken (MTK)
-- **Contract Address**: [Deploy to Sepolia and update here]
+- **Contract Address**: 0xc47ff5152a8bd3b3415e86c654364a018b4fc31e
 - **Live DApp URL**: [Host frontend on GitHub Pages/Netlify and update here]
 
 ## Deployment Instructions
@@ -112,7 +112,7 @@ npx hardhat ignition deploy ignition/modules/MyToken.ts
    npx hardhat verify --network sepolia <CONTRACT_ADDRESS> "MyToken" "MTK" "1000000000000000000000000"
    ```
 
-4. Host frontend: Upload `frontend/index.html` to GitHub Pages or Netlify and update the URL here.
+4. Host frontend: Enable GitHub Pages for the `frontend` folder in repository settings, or upload to Netlify, and update the URL here.
 
 ## Project Structure
 
